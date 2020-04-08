@@ -69,7 +69,7 @@ class AppAuthenticator extends AbstractFormLoginAuthenticator implements Passwor
 
         if (!$user) {
             // fail authentication with a custom error
-            throw new CustomUserMessageAuthenticationException('Utilisateur introuvable');
+            throw new CustomUserMessageAuthenticationException('Username could not be found');
         }
 
         return $user;
