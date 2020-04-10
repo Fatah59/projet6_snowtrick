@@ -33,8 +33,8 @@ class MailerService
             ->setBody(
                 $this->twig->render(
                     'emails/registration.html.twig', [
-                        'contact' =>$registration
-                    ]),
+                    'contact' =>$registration
+                ]),
                 'text/html');
 
         $this->mailer->send($message);

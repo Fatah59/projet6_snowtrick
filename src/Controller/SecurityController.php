@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
+use App\Form\ForgotPasswordType;
+use App\Service\MailerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -39,8 +42,23 @@ class SecurityController extends AbstractController
     /**
      * @Route("/forgot_password", name="forgot_password")
      */
-    public function forgotPassword(Request $request)
+    public function forgotPassword(Request $request, MailerService $mailerService)
     {
-        return $this->render('security/forgotpassword.html.twig');
+        $forgotPassword = new User();
+        $forgotPasswordForm = $this->createForm(ForgotPasswordType::class, $forgotPassword);
+        $forgotPasswordForm->handleRequest($request);
+
+        if ($forgotPasswordForm->isSubmitted() && $forgotPasswordForm->isValid()) {
+            $mailerService->forgotPasswordAction($forgotPassword);
+
+            $this->addFlash('success', 'Consult your mailbox for your request to reset your password');
+
+            return $this->redirectToRoute('forgot_password');
+        }
+
+        return $this->render('security/forgotpassword.html.twig', [
+            'forgotPasswordForm' => $forgotPasswordForm->createView()
+        ]);
     }
 }
+
