@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -22,7 +24,7 @@ class Trick
     private $name;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="text")
      */
     private $description;
 
@@ -35,6 +37,34 @@ class Trick
      * @ORM\Column(type="datetime")
      */
     private $updatedAt;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\TrickGroup", inversedBy="tricks")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $trickGroup;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Picture", mappedBy="trick")
+     */
+    private $trickPicture;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Video", mappedBy="trick")
+     */
+    private $trickVideo;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Comment", mappedBy="trick")
+     */
+    private $trickComment;
+
+    public function __construct()
+    {
+        $this->trickPicture = new ArrayCollection();
+        $this->trickVideo = new ArrayCollection();
+        $this->trickComment = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -88,4 +118,115 @@ class Trick
 
         return $this;
     }
+
+    public function getTrickGroup(): ?TrickGroup
+    {
+        return $this->trickGroup;
+    }
+
+    /**
+     * @param TrickGroup|null $trickGroup
+     * @return Trick
+     * @deprecated use TrickGroup::addTrick or TrickGroup::removeTrick instead
+     */
+    public function setTrickGroup(?TrickGroup $trickGroup): self
+    {
+        $this->trickGroup = $trickGroup;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Picture[]
+     */
+    public function getTrickPicture(): Collection
+    {
+        return $this->trickPicture;
+    }
+
+    public function addTrickPicture(Picture $trickPicture): self
+    {
+        if (!$this->trickPicture->contains($trickPicture)) {
+            $this->trickPicture[] = $trickPicture;
+            $trickPicture->setTrick($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrickPicture(Picture $trickPicture): self
+    {
+        if ($this->trickPicture->contains($trickPicture)) {
+            $this->trickPicture->removeElement($trickPicture);
+            // set the owning side to null (unless already changed)
+            if ($trickPicture->getTrick() === $this) {
+                $trickPicture->setTrick(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Video[]
+     */
+    public function getTrickVideo(): Collection
+    {
+        return $this->trickVideo;
+    }
+
+    public function addTrickVideo(Video $trickVideo): self
+    {
+        if (!$this->trickVideo->contains($trickVideo)) {
+            $this->trickVideo[] = $trickVideo;
+            $trickVideo->setTrick($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrickVideo(Video $trickVideo): self
+    {
+        if ($this->trickVideo->contains($trickVideo)) {
+            $this->trickVideo->removeElement($trickVideo);
+            // set the owning side to null (unless already changed)
+            if ($trickVideo->getTrick() === $this) {
+                $trickVideo->setTrick(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Comment[]
+     */
+    public function getTrickComment(): Collection
+    {
+        return $this->trickComment;
+    }
+
+    public function addTrickComment(Comment $trickComment): self
+    {
+        if (!$this->trickComment->contains($trickComment)) {
+            $this->trickComment[] = $trickComment;
+            $trickComment->setTrick($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrickComment(Comment $trickComment): self
+    {
+        if ($this->trickComment->contains($trickComment)) {
+            $this->trickComment->removeElement($trickComment);
+            // set the owning side to null (unless already changed)
+            if ($trickComment->getTrick() === $this) {
+                $trickComment->setTrick(null);
+            }
+        }
+
+        return $this;
+    }
+
 }

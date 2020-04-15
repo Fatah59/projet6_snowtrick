@@ -27,9 +27,21 @@ class Comment
     private $createdAt;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="text")
      */
     private $message;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Trick", inversedBy="trickComment")
+     */
+    private $trick;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="userComment")
+     */
+    private $user;
+
+
 
     public function getId(): ?int
     {
@@ -68,6 +80,30 @@ class Comment
     public function setMessage(string $message): self
     {
         $this->message = $message;
+
+        return $this;
+    }
+
+    public function getTrick(): ?Trick
+    {
+        return $this->trick;
+    }
+
+    public function setTrick(?Trick $trick): self
+    {
+        $this->trick = $trick;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

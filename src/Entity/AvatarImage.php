@@ -26,6 +26,7 @@ class AvatarImage
      */
     private $alt;
 
+
     public function getId(): ?int
     {
         return $this->id;
@@ -54,4 +55,23 @@ class AvatarImage
 
         return $this;
     }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+
+        // set (or unset) the owning side of the relation if necessary
+        $newUserAvatarImage = null === $user ? null : $this;
+        if ($user->getUserAvatarImage() !== $newUserAvatarImage) {
+            $user->setUserAvatarImage($newUserAvatarImage);
+        }
+
+        return $this;
+    }
+
 }
