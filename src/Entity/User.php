@@ -35,15 +35,6 @@ class User implements UserInterface
      */
     private $password;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $name;
-
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $surname;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
@@ -64,6 +55,16 @@ class User implements UserInterface
      * @ORM\OneToOne(targetEntity="App\Entity\AvatarImage", cascade={"persist", "remove"})
      */
     private $userAvatarImage;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $resetPasswordToken;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $resetPasswordTokenCreatedAt;
 
 
     public function __construct()
@@ -144,30 +145,6 @@ class User implements UserInterface
         // $this->plainPassword = null;
     }
 
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    public function getSurname(): ?string
-    {
-        return $this->surname;
-    }
-
-    public function setSurname(string $surname): self
-    {
-        $this->surname = $surname;
-
-        return $this;
-    }
-
     public function getEmail(): ?string
     {
         return $this->email;
@@ -231,6 +208,30 @@ class User implements UserInterface
     public function setUserAvatarImage(?AvatarImage $userAvatarImage): self
     {
         $this->userAvatarImage = $userAvatarImage;
+
+        return $this;
+    }
+
+    public function getResetPasswordToken(): ?string
+    {
+        return $this->resetPasswordToken;
+    }
+
+    public function setResetPasswordToken(?string $resetPasswordToken): self
+    {
+        $this->resetPasswordToken = $resetPasswordToken;
+
+        return $this;
+    }
+
+    public function getResetPasswordTokenCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->resetPasswordTokenCreatedAt;
+    }
+
+    public function setResetPasswordTokenCreatedAt(?\DateTimeInterface $resetPasswordTokenCreatedAt): self
+    {
+        $this->resetPasswordTokenCreatedAt = $resetPasswordTokenCreatedAt;
 
         return $this;
     }

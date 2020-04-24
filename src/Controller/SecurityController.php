@@ -2,6 +2,10 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
+use App\Form\ForgotPasswordType;
+use App\Repository\UserRepository;
+use App\Service\MailerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -10,6 +14,17 @@ use Symfony\Component\HttpFoundation\Request;
 
 class SecurityController extends AbstractController
 {
+    /**
+     * @var UserRepository
+     */
+    private $userRepository;
+
+    public function __construct(UserRepository $userRepository)
+    {
+        $this->userRepository = $userRepository;
+    }
+
+
     /**
      * @Route("/login", name="login")
      */
@@ -39,8 +54,43 @@ class SecurityController extends AbstractController
     /**
      * @Route("/forgot_password", name="forgot_password")
      */
-    public function forgotPassword(Request $request)
+    public function forgotPassword(Request $request, MailerService $mailerService)
     {
-        return $this->render('security/forgotpassword.html.twig');
+        $user = new User();
+        $forgotPasswordForm = $this->createForm(ForgotPasswordType::class, $user);
+        $forgotPasswordForm->handleRequest($request);
+
+        if ($forgotPasswordForm->isSubmitted() && $forgotPasswordForm->isValid()) {
+
+
+            $user = $this->userRepository->findOneBy(['username'=>$user->getUsername()]);
+
+
+            if(!$user){
+                $this->addFlash('success', 'Consult your mailbox for your request to reset your password, if your account exist');
+
+                return $this->redirectToRoute('forgot_password');
+            }
+
+            $mailerService->askResetPassword($user);
+
+
+            $this->addFlash('success', 'Consult your mailbox for your request to reset your password, if your account exist');
+
+            return $this->redirectToRoute('forgot_password');
+        }
+
+        return $this->render('security/forgotpassword.html.twig', [
+            'forgotPasswordForm' => $forgotPasswordForm->createView()
+        ]);
+    }
+
+    /**
+     * @Route("/reset_password/{reset_password_token}", name="reset_password")
+     */
+    public function resetPassword(Request $request)
+    {
+        return $this->render('security/resetpassword.html.twig');
     }
 }
+
