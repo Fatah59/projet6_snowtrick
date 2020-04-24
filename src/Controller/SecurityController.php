@@ -61,9 +61,9 @@ class SecurityController extends AbstractController
         $forgotPasswordForm->handleRequest($request);
 
         if ($forgotPasswordForm->isSubmitted() && $forgotPasswordForm->isValid()) {
-            $data = $forgotPasswordForm->getData();
 
-            $user = $this->userRepository->findOneBy(['username'=>$data->getUsername()]);
+
+            $user = $this->userRepository->findOneBy(['username'=>$user->getUsername()]);
 
 
             if(!$user){

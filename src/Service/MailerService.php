@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Twig\Environment;
@@ -58,7 +59,7 @@ class MailerService
     {
         $user
             ->setResetPasswordToken($this->generateUniqueToken())
-            ->setResetPasswordTokenCreatedAt(new \DateTime());
+            ->setResetPasswordTokenCreatedAt(new DateTime());
 
         $this->entityManager->flush();
 
