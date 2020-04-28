@@ -4,13 +4,19 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\ForgotPasswordType;
+use App\Form\ResetPasswordType;
 use App\Repository\UserRepository;
 use App\Service\MailerService;
+use DateTime;
+use DateTimeInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\HttpFoundation\Request;
+
 
 class SecurityController extends AbstractController
 {
@@ -18,10 +24,28 @@ class SecurityController extends AbstractController
      * @var UserRepository
      */
     private $userRepository;
+    /**
+     * @var EntityManagerInterface
+     */
+    private $entityManager;
 
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, EntityManagerInterface $entityManager)
     {
         $this->userRepository = $userRepository;
+        $this->entityManager = $entityManager;
+    }
+
+    private function isRequestInTime(DateTimeInterface $resetPasswordTokenCreatedAt = null)
+    {
+        if ($resetPasswordTokenCreatedAt === null) {
+            return false;
+        }
+
+        $now = new DateTime();
+        $interval = $now->getTimestamp() - $resetPasswordTokenCreatedAt->getTimestamp();
+
+        $daySeconds = 60 * 10;
+        return $interval <= $daySeconds;
     }
 
 
@@ -86,11 +110,45 @@ class SecurityController extends AbstractController
     }
 
     /**
-     * @Route("/reset_password/{reset_password_token}", name="reset_password")
+     * @Route("/reset_password/{resetPasswordToken}", name="reset_password")
      */
-    public function resetPassword(Request $request)
+    public function resetPassword(Request $request, UserPasswordEncoderInterface $passwordEncoder, $resetPasswordToken)
     {
-        return $this->render('security/resetpassword.html.twig');
+
+        $resetPasswordForm = $this->createForm(ResetPasswordType::class);
+        $resetPasswordForm->handleRequest($request);
+
+        if ($resetPasswordForm->isSubmitted() && $resetPasswordForm->isValid()) {
+            $formData = $resetPasswordForm->getData();
+
+            $user = $this->userRepository->findOneBy(['resetPasswordToken' => $resetPasswordToken, 'email' => $formData['email']]);
+            if ($user === null) {
+                $this->addFlash('not found', 'User not found. Please enter a correct username.');
+                return $this->redirectToRoute('forgot_password');
+            }
+
+            if (!$this->isRequestInTime($user->getResetPasswordTokenCreatedAt())){
+                $this->addFlash('time up', 'Time limit exceeded, please start your request again');
+                return $this->redirectToRoute('forgot_password');
+            }
+
+            $password = $passwordEncoder->encodePassword($user, $formData['plainPassword']);
+            $user->setPassword($password)
+                ->setResetPasswordToken(null)
+                ->setResetPasswordTokenCreatedAt(null);
+
+            $this->entityManager->flush();
+
+            $this->addFlash('reset successful', 'Congratulations, your password has been changed, you can use it to sign in.');
+
+            return $this->redirectToRoute('home');
+
+        }
+
+        return $this->render('security/resetpassword.html.twig', [
+            'resetPasswordForm' => $resetPasswordForm->createView()
+        ]);
     }
+
 }
 
