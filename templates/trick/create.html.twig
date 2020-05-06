@@ -1,18 +1,20 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}SnowTricks - Edit a Trick{% endblock %}
+{% block title %}SnowTricks - Create a new Trick{% endblock %}
 
 {% block body %}
-
     <div class="col-lg-7 col-md-10 mx-auto">
-        <h1>Edit the Trick : {{ trick.name }}</h1>
+    <h1>Create new Trick</h1>
         {{ form_start(trickForm) }}
 
         {{ form_widget(trickForm) }}
 
-        <button type="submit" class="btn btn-success btn-lg col-12"><i class="fa fa-check"></i>Save the changes !</button>
+        <button type="submit" class="btn btn-success btn-lg col-12"><i class="fa fa-check"></i>Create the new trick !</button>
 
         {{ form_end(trickForm) }}
 
     </div>
+
 {% endblock %}
+
+

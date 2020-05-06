@@ -6,8 +6,11 @@ use App\Entity\Comment;
 use App\Entity\Trick;
 use App\Form\TrickType;
 use App\Repository\TrickRepository;
+use App\Service\PictureUploader;
+use App\Service\UploadPicture;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -28,34 +31,57 @@ class TrickController extends AbstractController
     }
 
     /**
-     * @Route("/new", name="trick_new", methods={"GET","POST"})
+     * @Route("/create", name="trick_create", methods={"GET","POST"})
      */
-    public function new(Request $request): Response
+    public function create(Request $request, EntityManagerInterface $entityManager, PictureUploader $pictureUploader)
     {
         $trick = new Trick();
-        $form = $this->createForm(TrickType::class, $trick);
-        $form->handleRequest($request);
+        $trickForm = $this->createForm(TrickType::class, $trick);
+        $trickForm->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
+        if ($trickForm->isSubmitted() && $trickForm->isValid())
+        {
+            $mainPicture = $trick->getMainPicture();
+            $mainPicture = $pictureUploader->upload($mainPicture);
+            $entityManager->persist($mainPicture);
+
+            foreach ($trick->getTrickPicture() as $picture)
+            {
+                $picture = $pictureUploader->savePicture($picture);
+                $entityManager->persist($picture);
+            }
+
+            foreach ($trick->getTrickVideo() as $video)
+            {
+                $video->setTrick($trick);
+                $entityManager->persist($video);
+            }
+
+            $trick->setCreatedAt(new \DateTime());
+            $trick->setUpdatedAt(new \DateTime());
+
+
             $entityManager->persist($trick);
             $entityManager->flush();
 
-            return $this->redirectToRoute('trick_index');
+            $this->addFlash('success', 'The trick' .$trick->getName(). 'has been saved !');
+
+            return $this->redirectToRoute('trick_details', [
+                'name' => $trick->getName()
+            ]);
         }
 
-        return $this->render('trick/new.html.twig', [
-            'trick' => $trick,
-            'form' => $form->createView(),
+        return $this->render('trick/create.html.twig', [
+            'trickForm' => $trickForm->createView(),
         ]);
     }
 
     /**
-     * @Route("/trick/details/{name}", name="trick_details", methods={"GET"})
+     * @Route("/details/{slug}", name="trick_details", methods={"GET"})
      */
-    public function details(TrickRepository $trickRepository, Request $request,EntityManagerInterface $entityManager, $name)
+    public function details(TrickRepository $trickRepository, Request $request,EntityManagerInterface $entityManager, $slug)
     {
-        $trick = $trickRepository->findOneByName($name);
+        $trick = $trickRepository->findOneBySlug($slug);
 
         $comment = new Comment();
 
@@ -71,8 +97,10 @@ class TrickController extends AbstractController
             $entityManager->persist($comment);
             $entityManager->flush();
 
-            return $this->redirectToRoute('trick-details', [
-                'name' => $trick->getName()
+            $this->addFlash('success', 'Your comment has been saved !');
+
+            return $this->redirectToRoute('trick_details', [
+                'slug' => $trick->getSlug()
             ]);
         }
 
@@ -83,17 +111,32 @@ class TrickController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/edit", name="trick_edit", methods={"GET","POST"})
+     * @Route("/edit/{slug}", name="trick_edit", methods={"GET","POST"})
      */
-    public function edit(Request $request, Trick $trick): Response
+    public function edit(Request $request, TrickRepository $trickRepository, EntityManagerInterface $entityManager, $slug)
     {
+        $trick = $trickRepository->findOneBySlug($slug);
+
         $form = $this->createForm(TrickType::class, $trick);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        if ($form->isSubmitted() && $form->isValid())
+        {
 
-            return $this->redirectToRoute('trick_index');
+            foreach($trick->getTrickPicture() as $picture)
+            {
+                $picture->setTrick($trick);
+                $entityManager->persist($picture);
+            }
+
+            $trick->setUpdatedAt(new \DateTime());
+            $entityManager->persist($trick);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'The trick' .$trick->getName(). 'has been modified !');
+            return $this->redirectToRoute('trick_details', [
+                'slug' => $trick->getSlug()
+            ]);
         }
 
         return $this->render('trick/edit.html.twig', [
@@ -103,16 +146,27 @@ class TrickController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", name="trick_delete", methods={"DELETE"})
+     * @Route("/delete/{slug}", name="trick_delete", methods={"DELETE"})
      */
-    public function delete(Request $request, Trick $trick): Response
+    public function delete(Request $request, TrickRepository $trickRepository, EntityManagerInterface $entityManager, $slug)
     {
-        if ($this->isCsrfTokenValid('delete'.$trick->getId(), $request->request->get('_token'))) {
+        $trick = $trickRepository->findOneBySlug($slug);
+
+        $fileSystem = new Filesystem();
+
+        if ($this->isCsrfTokenValid('delete'.$trick->getId(), $request->request->get('_token')))
+        {
+            foreach ($trick->getTrickPicture() as $picture) {
+                $fileSystem->remove($picture->getPath() . '/' . $picture->getName());
+            }
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->remove($trick);
             $entityManager->flush();
+
+            $this->addFlash('success', 'The trick' . $trick->getName() . 'was successfully deleted !');
         }
 
-        return $this->redirectToRoute('trick_index');
+        return $this->redirectToRoute('home');
     }
 }

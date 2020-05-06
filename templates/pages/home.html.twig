@@ -22,113 +22,40 @@
     </div>
 
     <a class="btn btn-light allTricks" href="#tricks" role="tab">
-        <i class="fa fa-arrow-down fa-vc"></i>
+        <i id="arrow-down" class="fa fa-arrow-down fa-vc"></i>
     </a>
-    <div class="container mt-5">
-        <div class id="tricks">
-            <div class="row">
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks1">
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks1" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks1" class="card-title">Tricks1</a>
+    <section id="tricks" class="position-relative">
+        <div class="container mt-5">
+            <div class id="trickList">
+                {% for trick in tricks %}
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="card">
+                            <a href="{{ path('trick_details', {'slug': trick.slug}) }}">
+                                <img src="{{ asset(trick.mainImage ~ '/' ~ trick.mainImage.name) }}" class="card-img-top" alt="{{ trick.mainImage }}">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">
+                                        {{ trick.name }}
+                                        {% if app.user %}
+                                            <div class="float-right">
+                                                <a href="{{ path('trick_edit', {'slug': trick.slug}) }}"><i class="fas fa-pencil-alt"></i></a>
+                                                <a href="{{ path('trick_delete', {'slug': trick.slug}) }}" onclick="return confirm(`Are you sure you want to delete the trick: {{trick.name}} ?`)"><i class="fas fa-trash-alt"></i></a>
+                                            </div>
+                                        {% endif %}
+                                    </h5>
+                                </div>
+                            </a>
+                        </div>
                     </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks2">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks2" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks2" class="card-title">Tricks2</a>
-                    </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks3">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks3" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks3" class="card-title">Tricks3</a>
-                    </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks4">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks4" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks4" class="card-title">Tricks4</a>
-                    </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks5">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks5" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks5" class="card-title">Tricks5</a>
-                    </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks6">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks6" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks6" class="card-title">Tricks6</a>
-                    </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks7">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks7" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks7" class="card-title">Tricks7</a>
-                    </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks8">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks8" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks8" class="card-title">Trick8</a>
-                    </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks9">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks9" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks9" class="card-title">Trick9</a>
-                    </div>
-                </div>
-
-                <div class="card homeTrick">
-                    <a href="/tricks/tricks10">
-
-                        <img src="../image/homepageimage.jpg" alt="Figure snowboard Tricks10" />
-                    </a>
-                    <div class="card-body">
-                        <a href="/tricks/tricks10" class="card-title">Trick10</a>
-                    </div>
-                </div>
-
+                {% endfor %}
             </div>
-
         </div>
-    </div>
 
+        <div class="row">
+            <div class="col-12 text-center">
+                <button id="loadMoreTricks" class="btn btn-primary">Load more</button>
+            </div>
+        </div>
+        <a class="btn btn-light allTricks" href="#tricks" role="tab"><i id="arrow-up" class="fa fa-arrow-up fa-vc"></i></a>
+    </section>
 {% endblock %}
+
