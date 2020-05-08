@@ -1,8 +1,12 @@
-<h3>You did it! You registered!</h3>
+{% block body %}
 
-Hi {{ username }}! You're successfully registered.
+    <h3>You did it ! You registered !</h3>
+
+    Hi {{ user.username }} ! You're successfully registered.
 
 
-To login, go to: <a href="{{ url('login') }}">the login page (click here)</a>.
+    <p>To login, go to: the login page<a href="{{ url('account_activation', { 'registrationToken' : user.registrationToken })}}">(click here)</a>.
 
-Thanks!
+    <p>Thanks!</p>
+
+{% endblock %}

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\ForgotPasswordType;
+use App\Form\RegistrationType;
 use App\Form\ResetPasswordType;
 use App\Repository\UserRepository;
 use App\Service\MailerService;
@@ -48,6 +49,88 @@ class SecurityController extends AbstractController
         return $interval <= $daySeconds;
     }
 
+    private function isRegistredInTime(DateTimeInterface $registrationCreatedAt = null)
+    {
+        if ($registrationCreatedAt === null) {
+            return false;
+        }
+
+        $now = new DateTime();
+        $interval = $now->getTimestamp() - $registrationCreatedAt->getTimestamp();
+
+        $daySeconds = 60 * 10;
+        return $interval <= $daySeconds;
+    }
+
+
+    /**
+     * @Route("/registration", name="registration")
+     */
+    public function registration(Request $request, EntityManagerInterface $entityManager, UserPasswordEncoderInterface $passwordEncoder, MailerService $mailerService)
+    {
+        $user = new User();
+
+        $registrationForm = $this->createForm(RegistrationType::class, $user);
+        $registrationForm->handleRequest($request);
+
+        if($registrationForm->isSubmitted() && $registrationForm->isValid()) {
+            $password = $passwordEncoder->encodePassword($user, $user->getPassword());
+            $user->setPassword($password)
+                ->setRegistrationCreatedAt(new DateTime)
+                ->setActivated(false)
+                ->setRegistrationToken(md5(random_bytes(10)));
+
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            $mailerService->askRegistration($user);
+
+            $this->addFlash('success', 'Please consult your mailbox to validate your account and be able to connect');
+
+            return $this->redirectToRoute('registration');
+        }
+
+        return $this->render('security/registration.html.twig', [
+            'registrationForm' => $registrationForm->createView()
+        ]);
+
+    }
+
+    /**
+     * @Route("/account_activation/{registrationToken}", name="account_activation")
+     */
+    public function accountActivation($registrationToken)
+    {
+
+            $user = $this->userRepository->findOneBy(['registrationToken' => $registrationToken]);
+
+            if ($user === null) {
+                $this->addFlash('not found', 'User not found. Please enter a correct username.');
+                return $this->redirectToRoute('registration');
+            }
+
+            if (!$this->isRegistredInTime($user->getRegistrationCreatedAt())){
+                $this->entityManager->remove($user);
+                $this->entityManager->flush();
+
+                $this->addFlash('time out', 'Time limit exceeded, please start your registration again');
+                return $this->redirectToRoute('registration');
+            }
+
+            $user->setActivated(true);
+
+
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+
+
+            $this->addFlash('registration successful', 'Congratulations ! Your account has been successfully activated ! You can now log in !');
+
+            return $this->redirectToRoute('login');
+
+
+        return $this->render('login.html.twig');
+    }
 
     /**
      * @Route("/login", name="login")
@@ -57,7 +140,6 @@ class SecurityController extends AbstractController
         if ($this->getUser()) {
             return $this->redirectToRoute('home');
         }
-
 
         // get the login error if there is one
         $error = $authenticationUtils->getLastAuthenticationError();

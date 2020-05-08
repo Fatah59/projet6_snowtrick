@@ -39,21 +39,31 @@ class MailerService
         $this->csrfTokenManager = $csrfTokenManager;
     }
 
-    public function registrationAction (User $registration)
+    public function askRegistration(User $user): void
+    {
+        $user
+            ->setRegistrationToken($this->generateUniqueToken())
+            ->setRegistrationCreatedAt(new DateTime());
+
+        $this->entityManager->flush();
+
+        $this->registrationAction($user);
+    }
+
+    public function registrationAction (User $user)
     {
         $message = (new \Swift_Message('Registration to the website snowtricks !'))
             ->setFrom('projet6snowtricks@derradjfatah.com')
-            ->setTo($registration->getEmail())
+            ->setTo($user->getEmail())
             ->setBody(
                 $this->twig->render(
                     'emails/registration.html.twig', [
-                    'contact' =>$registration
+                    'user' =>$user
                 ]),
                 'text/html');
 
         $this->mailer->send($message);
     }
-
 
     public function askResetPassword(User $user): void
     {

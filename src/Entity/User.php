@@ -66,6 +66,21 @@ class User implements UserInterface
      */
     private $resetPasswordTokenCreatedAt;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $registrationCreatedAt;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $activated;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $registrationToken;
+
 
     public function __construct()
     {
@@ -232,6 +247,42 @@ class User implements UserInterface
     public function setResetPasswordTokenCreatedAt(?\DateTimeInterface $resetPasswordTokenCreatedAt): self
     {
         $this->resetPasswordTokenCreatedAt = $resetPasswordTokenCreatedAt;
+
+        return $this;
+    }
+
+    public function getRegistrationCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->registrationCreatedAt;
+    }
+
+    public function setRegistrationCreatedAt(\DateTimeInterface $registrationCreatedAt): self
+    {
+        $this->registrationCreatedAt = $registrationCreatedAt;
+
+        return $this;
+    }
+
+    public function getActivated(): ?bool
+    {
+        return $this->activated;
+    }
+
+    public function setActivated(bool $activated): self
+    {
+        $this->activated = $activated;
+
+        return $this;
+    }
+
+    public function getRegistrationToken(): ?string
+    {
+        return $this->registrationToken;
+    }
+
+    public function setRegistrationToken(string $registrationToken): self
+    {
+        $this->registrationToken = $registrationToken;
 
         return $this;
     }

@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title 'Registration' %}
+
+{% block body %}
+    <section class="registration">
+
+        <div class="container border form-group d-flex align-items-center flex-column justify-content-around">
+            <h1>Registration</h1>
+
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {% for message in app.flashes('time out') %}
+                <div class="alert alert-danger">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {{ form_start(registrationForm) }}
+            <div class="form-group d-flex flex-column align-items-center">
+
+                <div class="form-errors">
+                    {{ form_errors(registrationForm.email) }}
+                </div>
+                {{ form_widget(registrationForm) }}
+            </div>
+            <div class="form-group d-flex flex-column align-items-center">
+                <button class="btn btn-primary btn-primary-blue-reverse" type="submit">Create an account</button>
+            </div>
+
+            {{ form_end(registrationForm) }}
+
+        </div>
+    </section>
+{% endblock %}

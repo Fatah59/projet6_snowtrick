@@ -32,4 +32,9 @@ services:
 
     App\Listener\Doctrine\MainPictureListener:
         tags:
-            - {name: 'doctrine_event_listener', event: 'prePersist'}
+            - { name: 'doctrine_event_listener', event: 'prePersist' }
+
+    App\Listener\Doctrine\UserPasswordListener:
+        tags:
+            - { name: 'doctrine_event_listener', event: 'prePersist' }
+            - { name: 'doctrine_event_listener', event: 'preUpdate' }
