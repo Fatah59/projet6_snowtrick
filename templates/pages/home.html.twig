@@ -3,8 +3,21 @@
 {% block title 'Snowtricks' %}
 
 {% block body %}
-
     <div class="backgroundImage">
+        <div class="container form-group d-flex align-items-center flex-column justify-content-around">
+            {% for message in app.flashes('reset successful') %}
+                <div class="alert alert-success">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {% if app.user %}
+                <div class="alert alert-success mb-3">
+                    You are logged in as {{ app.user.username }}, <a href="{{ path('app_logout') }}">Logout</a>
+                </div>
+            {% endif %}
+        </div>
+
         <p class="catchSentence">Rejoignez la plus grande communauté<br />de passionnés de snowboard</p>
     </div>
 
