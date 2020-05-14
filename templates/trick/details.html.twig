@@ -72,7 +72,7 @@
                             <img src="{{ asset(#) }}" class="avatar avatar-medium" alt="comment.user.username">
                         </div>
                         <p class="col-lg-10 col-8 bg-light">
-                            <strong>{{ comment.username }}</strong> <small class="text-muted">({{ comment.createdAt | date('m/d/Y à H:i') }}) :</small>
+                            <strong>{{ comment.user.username }}</strong> <small class="text-muted">({{ comment.createdAt | date('m/d/Y à H:i') }}) :</small>
                             <br>{{ comment.message }}
                         </p>
                     </div>

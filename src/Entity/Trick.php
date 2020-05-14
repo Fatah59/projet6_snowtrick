@@ -59,6 +59,17 @@ class Trick
      */
     private $trickComment;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\Picture", cascade={"persist", "remove"})
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $mainPicture;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $slug;
+
     public function __construct()
     {
         $this->trickPicture = new ArrayCollection();
@@ -225,6 +236,30 @@ class Trick
                 $trickComment->setTrick(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getMainPicture(): ?Picture
+    {
+        return $this->mainPicture;
+    }
+
+    public function setMainPicture(?Picture $mainPicture): self
+    {
+        $this->mainPicture = $mainPicture;
+
+        return $this;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
 
         return $this;
     }

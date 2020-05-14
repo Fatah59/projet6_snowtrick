@@ -4,6 +4,7 @@
 namespace App\Controller;
 
 
+use App\Repository\TrickRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,9 +17,13 @@ class AppController extends AbstractController
  * @return Response
  */
 
-    public function indexAction(Request $request)
+    public function indexAction(TrickRepository $trickRepository)
     {
-        return $this->render('pages/home.html.twig');
+        $tricks = $trickRepository->findBy([], ['createdAt' => 'DESC'], 15, 0);
+
+        return $this->render('pages/home.html.twig', [
+            'tricks' => $tricks
+        ]);
     }
 
     /**

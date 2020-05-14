@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\PictureRepository")
@@ -28,9 +29,11 @@ class Picture
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Trick", inversedBy="trickPicture")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=true)
      */
     private $trick;
+
+    private $file;
 
     public function getId(): ?int
     {
@@ -66,10 +69,31 @@ class Picture
         return $this->trick;
     }
 
+    /**
+     * @deprecated Should use Trick::addPicture / Trick::removePicture
+     */
     public function setTrick(?Trick $trick): self
     {
         $this->trick = $trick;
 
+        return $this;
+    }
+
+    /**
+     * @return UploadedFile
+     */
+    public function getFile()
+    {
+        return $this->file;
+    }
+
+    /**
+     * @param UploadedFile $file
+     * @return Picture
+     */
+    public function setFile($file):self
+    {
+        $this->file = $file;
         return $this;
     }
 }
