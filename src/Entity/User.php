@@ -5,11 +5,15 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @Assert\UniqueEntity("username")
+ * @Assert\UniqueEntity("email")
  */
+
 class User implements UserInterface
 {
     /**
@@ -66,10 +70,6 @@ class User implements UserInterface
      */
     private $resetPasswordTokenCreatedAt;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
-    private $registrationCreatedAt;
 
     /**
      * @ORM\Column(type="boolean")
@@ -247,18 +247,6 @@ class User implements UserInterface
     public function setResetPasswordTokenCreatedAt(?\DateTimeInterface $resetPasswordTokenCreatedAt): self
     {
         $this->resetPasswordTokenCreatedAt = $resetPasswordTokenCreatedAt;
-
-        return $this;
-    }
-
-    public function getRegistrationCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->registrationCreatedAt;
-    }
-
-    public function setRegistrationCreatedAt(\DateTimeInterface $registrationCreatedAt): self
-    {
-        $this->registrationCreatedAt = $registrationCreatedAt;
 
         return $this;
     }

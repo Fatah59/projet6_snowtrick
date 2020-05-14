@@ -7,9 +7,7 @@ use App\Form\ForgotPasswordType;
 use App\Form\RegistrationType;
 use App\Form\ResetPasswordType;
 use App\Repository\UserRepository;
-use App\Service\MailerService;
-use DateTime;
-use DateTimeInterface;
+use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,44 +27,22 @@ class SecurityController extends AbstractController
      * @var EntityManagerInterface
      */
     private $entityManager;
+    /**
+     * @var UserService
+     */
+    private $userService;
 
-    public function __construct(UserRepository $userRepository, EntityManagerInterface $entityManager)
+    public function __construct(UserRepository $userRepository, EntityManagerInterface $entityManager, UserService $userService)
     {
         $this->userRepository = $userRepository;
         $this->entityManager = $entityManager;
+        $this->userService = $userService;
     }
-
-    private function isRequestInTime(DateTimeInterface $resetPasswordTokenCreatedAt = null)
-    {
-        if ($resetPasswordTokenCreatedAt === null) {
-            return false;
-        }
-
-        $now = new DateTime();
-        $interval = $now->getTimestamp() - $resetPasswordTokenCreatedAt->getTimestamp();
-
-        $daySeconds = 60 * 10;
-        return $interval <= $daySeconds;
-    }
-
-    private function isRegistredInTime(DateTimeInterface $registrationCreatedAt = null)
-    {
-        if ($registrationCreatedAt === null) {
-            return false;
-        }
-
-        $now = new DateTime();
-        $interval = $now->getTimestamp() - $registrationCreatedAt->getTimestamp();
-
-        $daySeconds = 60 * 10;
-        return $interval <= $daySeconds;
-    }
-
 
     /**
      * @Route("/registration", name="registration")
      */
-    public function registration(Request $request, EntityManagerInterface $entityManager, UserPasswordEncoderInterface $passwordEncoder, MailerService $mailerService)
+    public function registration(Request $request, EntityManagerInterface $entityManager, UserPasswordEncoderInterface $passwordEncoder, UserService $userService)
     {
         $user = new User();
 
@@ -76,14 +52,13 @@ class SecurityController extends AbstractController
         if($registrationForm->isSubmitted() && $registrationForm->isValid()) {
             $password = $passwordEncoder->encodePassword($user, $user->getPassword());
             $user->setPassword($password)
-                ->setRegistrationCreatedAt(new DateTime)
                 ->setActivated(false)
                 ->setRegistrationToken(md5(random_bytes(10)));
 
             $entityManager->persist($user);
             $entityManager->flush();
 
-            $mailerService->askRegistration($user);
+            $userService->askRegistration($user);
 
             $this->addFlash('success', 'Please consult your mailbox to validate your account and be able to connect');
 
@@ -93,7 +68,6 @@ class SecurityController extends AbstractController
         return $this->render('security/registration.html.twig', [
             'registrationForm' => $registrationForm->createView()
         ]);
-
     }
 
     /**
@@ -102,32 +76,21 @@ class SecurityController extends AbstractController
     public function accountActivation($registrationToken)
     {
 
-            $user = $this->userRepository->findOneBy(['registrationToken' => $registrationToken]);
+        $user = $this->userRepository->findOneBy(['registrationToken' => $registrationToken]);
 
-            if ($user === null) {
-                $this->addFlash('not found', 'User not found. Please enter a correct username.');
-                return $this->redirectToRoute('registration');
-            }
+        if ($user === null) {
+            $this->addFlash('not found', 'User not found. Please enter a correct username.');
+            return $this->redirectToRoute('registration');
+        }
 
-            if (!$this->isRegistredInTime($user->getRegistrationCreatedAt())){
-                $this->entityManager->remove($user);
-                $this->entityManager->flush();
+        $user->setActivated(true);
 
-                $this->addFlash('time out', 'Time limit exceeded, please start your registration again');
-                return $this->redirectToRoute('registration');
-            }
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
 
-            $user->setActivated(true);
+        $this->addFlash('registration successful', 'Congratulations ! Your account has been successfully activated ! You can now log in !');
 
-
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
-
-
-            $this->addFlash('registration successful', 'Congratulations ! Your account has been successfully activated ! You can now log in !');
-
-            return $this->redirectToRoute('login');
-
+        return $this->redirectToRoute('login');
 
         return $this->render('login.html.twig');
     }
@@ -160,7 +123,7 @@ class SecurityController extends AbstractController
     /**
      * @Route("/forgot_password", name="forgot_password")
      */
-    public function forgotPassword(Request $request, MailerService $mailerService)
+    public function forgotPassword(Request $request, UserService $userService)
     {
         $user = new User();
         $forgotPasswordForm = $this->createForm(ForgotPasswordType::class, $user);
@@ -168,9 +131,7 @@ class SecurityController extends AbstractController
 
         if ($forgotPasswordForm->isSubmitted() && $forgotPasswordForm->isValid()) {
 
-
             $user = $this->userRepository->findOneBy(['username'=>$user->getUsername()]);
-
 
             if(!$user){
                 $this->addFlash('success', 'Consult your mailbox for your request to reset your password, if your account exist');
@@ -178,8 +139,7 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('forgot_password');
             }
 
-            $mailerService->askResetPassword($user);
-
+            $userService->askResetPassword($user);
 
             $this->addFlash('success', 'Consult your mailbox for your request to reset your password, if your account exist');
 
@@ -209,7 +169,7 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('forgot_password');
             }
 
-            if (!$this->isRequestInTime($user->getResetPasswordTokenCreatedAt())){
+            if (!$this->userService->isRequestInTime($user->getResetPasswordTokenCreatedAt())){
                 $this->addFlash('time up', 'Time limit exceeded, please start your request again');
                 return $this->redirectToRoute('forgot_password');
             }
@@ -224,13 +184,10 @@ class SecurityController extends AbstractController
             $this->addFlash('reset successful', 'Congratulations, your password has been changed, you can use it to sign in.');
 
             return $this->redirectToRoute('home');
-
         }
 
         return $this->render('security/resetpassword.html.twig', [
             'resetPasswordForm' => $resetPasswordForm->createView()
         ]);
     }
-
 }
-
