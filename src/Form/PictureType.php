@@ -5,6 +5,7 @@ namespace App\Form;
 use App\Entity\Picture;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
@@ -15,9 +16,11 @@ class PictureType extends AbstractType
     {
         $builder
             ->add('file', FileType::class, [
-                'label' => 'Main Picture',
-                'mapped' => false,
+                'label' => false,
                 'required' => false,
+                'attr' => [
+                    'class' => 'picture_upload'
+                ],
                 'constraints' => [
                         new File([
                             'maxSize' => '2048k',
@@ -30,6 +33,7 @@ class PictureType extends AbstractType
                         ])
                     ],
             ])
+            ->add('alt', TextType::class)
         ;
     }
 

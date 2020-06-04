@@ -28,17 +28,19 @@ class TrickType extends AbstractType
                 'class' => TrickGroup::class,
                 'choice_label' => 'name'
             ])
-            ->add('mainPicture', PictureType::class)
-            ->add('trickPicture', CollectionType::class, [
-                'entry_type' => PictureType::class,
-                'allow_add' => true,
-                'allow_delete' => true,
+            ->add('mainPicture', PictureType::class, [
+                'label' => 'Main Picture'
             ])
-            ->add('trickvideo', CollectionType::class, [
-                'entry_type' => VideoType::class,
-                'allow_add' => true,
-                'allow_delete' => true,
-            ])
+//            ->add('trickPicture', CollectionType::class, [
+//                'entry_type' => PictureType::class,
+//                'allow_add' => true,
+//                'allow_delete' => true,
+//            ])
+//            ->add('trickvideo', CollectionType::class, [
+//                'entry_type' => VideoType::class,
+//                'allow_add' => true,
+//                'allow_delete' => true,
+//            ])
         ;
     }
 

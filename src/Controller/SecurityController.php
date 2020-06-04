@@ -174,8 +174,7 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('forgot_password');
             }
 
-            $password = $passwordEncoder->encodePassword($user, $formData['plainPassword']);
-            $user->setPassword($password)
+            $user->setPlainPassword($formData['plainPassword'])
                 ->setResetPasswordToken(null)
                 ->setResetPasswordTokenCreatedAt(null);
 

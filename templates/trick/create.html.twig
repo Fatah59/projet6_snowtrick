@@ -3,6 +3,7 @@
 {% block title %}SnowTricks - Create a new Trick{% endblock %}
 
 {% block body %}
+    {% if app.user %}
     <div class="col-lg-7 col-md-10 mx-auto">
     <h1>Create new Trick</h1>
         {{ form_start(trickForm) }}
@@ -14,6 +15,7 @@
         {{ form_end(trickForm) }}
 
     </div>
+    {% endif %}
 
 {% endblock %}
 
