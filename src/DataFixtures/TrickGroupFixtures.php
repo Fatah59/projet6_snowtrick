@@ -10,10 +10,25 @@ class TrickGroupFixtures extends Fixture
 {
     public function load(ObjectManager $manager)
     {
-        $trickGroup = new TrickGroup();
-        $trickGroup->setName('test');
+        $names = array(
+            'grabs',
+            'rotation',
+            'old school',
+            'slides',
+            'flips',
+            'tweaks'
+        );
 
-        $manager->persist($trickGroup);
-        $manager->flush();
+        foreach ($names as $name) {
+            $slug->slugify($name);
+
+            $trickGroup = new TrickGroup();
+            $trickGroup->setName($name);
+
+            $this->addReference($trickGroup);
+
+            $manager->persist($trickGroup);
+            $manager->flush();
+        }
     }
 }
