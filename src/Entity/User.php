@@ -5,11 +5,15 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @Assert\UniqueEntity("username")
+ * @Assert\UniqueEntity("email")
  */
+
 class User implements UserInterface
 {
     /**
@@ -67,9 +71,26 @@ class User implements UserInterface
     private $resetPasswordTokenCreatedAt;
 
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $activated;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $registrationToken;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Trick", mappedBy="user")
+     */
+    private $tricks;
+
+
     public function __construct()
     {
         $this->userComment = new ArrayCollection();
+        $this->tricks = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -232,6 +253,61 @@ class User implements UserInterface
     public function setResetPasswordTokenCreatedAt(?\DateTimeInterface $resetPasswordTokenCreatedAt): self
     {
         $this->resetPasswordTokenCreatedAt = $resetPasswordTokenCreatedAt;
+
+        return $this;
+    }
+
+    public function getActivated(): ?bool
+    {
+        return $this->activated;
+    }
+
+    public function setActivated(bool $activated): self
+    {
+        $this->activated = $activated;
+
+        return $this;
+    }
+
+    public function getRegistrationToken(): ?string
+    {
+        return $this->registrationToken;
+    }
+
+    public function setRegistrationToken(string $registrationToken): self
+    {
+        $this->registrationToken = $registrationToken;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Trick[]
+     */
+    public function getTricks(): Collection
+    {
+        return $this->tricks;
+    }
+
+    public function addTrick(Trick $trick): self
+    {
+        if (!$this->tricks->contains($trick)) {
+            $this->tricks[] = $trick;
+            $trick->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrick(Trick $trick): self
+    {
+        if ($this->tricks->contains($trick)) {
+            $this->tricks->removeElement($trick);
+            // set the owning side to null (unless already changed)
+            if ($trick->getUser() === $this) {
+                $trick->setUser(null);
+            }
+        }
 
         return $this;
     }

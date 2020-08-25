@@ -4,10 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Comment;
 use App\Entity\Trick;
+use App\Form\CommentType;
 use App\Form\TrickType;
 use App\Repository\TrickRepository;
-use App\Service\PictureUploader;
-use App\Service\UploadPicture;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
@@ -33,33 +32,14 @@ class TrickController extends AbstractController
     /**
      * @Route("/create", name="trick_create", methods={"GET","POST"})
      */
-    public function create(Request $request, EntityManagerInterface $entityManager, PictureUploader $pictureUploader)
+    public function create(Request $request, EntityManagerInterface $entityManager)
     {
         $trick = new Trick();
+        $trick->setUser($this->getUser());
         $trickForm = $this->createForm(TrickType::class, $trick);
         $trickForm->handleRequest($request);
 
-        if ($trickForm->isSubmitted() && $trickForm->isValid())
-        {
-            $mainPicture = $trick->getMainPicture();
-            $mainPicture = $pictureUploader->upload($mainPicture);
-            $entityManager->persist($mainPicture);
-
-            foreach ($trick->getTrickPicture() as $picture)
-            {
-                $picture = $pictureUploader->savePicture($picture);
-                $entityManager->persist($picture);
-            }
-
-            foreach ($trick->getTrickVideo() as $video)
-            {
-                $video->setTrick($trick);
-                $entityManager->persist($video);
-            }
-
-            $trick->setCreatedAt(new \DateTime());
-            $trick->setUpdatedAt(new \DateTime());
-
+        if ($trickForm->isSubmitted() && $trickForm->isValid()) {
 
             $entityManager->persist($trick);
             $entityManager->flush();
@@ -67,7 +47,7 @@ class TrickController extends AbstractController
             $this->addFlash('success', 'The trick' .$trick->getName(). 'has been saved !');
 
             return $this->redirectToRoute('trick_details', [
-                'name' => $trick->getName()
+                'slug' => $trick->getSlug()
             ]);
         }
 

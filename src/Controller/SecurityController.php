@@ -4,11 +4,10 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\ForgotPasswordType;
+use App\Form\RegistrationType;
 use App\Form\ResetPasswordType;
 use App\Repository\UserRepository;
-use App\Service\MailerService;
-use DateTime;
-use DateTimeInterface;
+use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,26 +27,73 @@ class SecurityController extends AbstractController
      * @var EntityManagerInterface
      */
     private $entityManager;
+    /**
+     * @var UserService
+     */
+    private $userService;
 
-    public function __construct(UserRepository $userRepository, EntityManagerInterface $entityManager)
+    public function __construct(UserRepository $userRepository, EntityManagerInterface $entityManager, UserService $userService)
     {
         $this->userRepository = $userRepository;
         $this->entityManager = $entityManager;
+        $this->userService = $userService;
     }
 
-    private function isRequestInTime(DateTimeInterface $resetPasswordTokenCreatedAt = null)
+    /**
+     * @Route("/registration", name="registration")
+     */
+    public function registration(Request $request, EntityManagerInterface $entityManager, UserPasswordEncoderInterface $passwordEncoder, UserService $userService)
     {
-        if ($resetPasswordTokenCreatedAt === null) {
-            return false;
+        $user = new User();
+
+        $registrationForm = $this->createForm(RegistrationType::class, $user);
+        $registrationForm->handleRequest($request);
+
+        if($registrationForm->isSubmitted() && $registrationForm->isValid()) {
+            $password = $passwordEncoder->encodePassword($user, $user->getPassword());
+            $user->setPassword($password)
+                ->setActivated(false)
+                ->setRegistrationToken(md5(random_bytes(10)));
+
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            $userService->askRegistration($user);
+
+            $this->addFlash('success', 'Please consult your mailbox to validate your account and be able to connect');
+
+            return $this->redirectToRoute('registration');
         }
 
-        $now = new DateTime();
-        $interval = $now->getTimestamp() - $resetPasswordTokenCreatedAt->getTimestamp();
-
-        $daySeconds = 60 * 10;
-        return $interval <= $daySeconds;
+        return $this->render('security/registration.html.twig', [
+            'registrationForm' => $registrationForm->createView()
+        ]);
     }
 
+    /**
+     * @Route("/account_activation/{registrationToken}", name="account_activation")
+     */
+    public function accountActivation($registrationToken)
+    {
+
+        $user = $this->userRepository->findOneBy(['registrationToken' => $registrationToken]);
+
+        if ($user === null) {
+            $this->addFlash('not found', 'User not found. Please enter a correct username.');
+            return $this->redirectToRoute('registration');
+        }
+
+        $user->setActivated(true);
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        $this->addFlash('registration successful', 'Congratulations ! Your account has been successfully activated ! You can now log in !');
+
+        return $this->redirectToRoute('login');
+
+        return $this->render('login.html.twig');
+    }
 
     /**
      * @Route("/login", name="login")
@@ -57,7 +103,6 @@ class SecurityController extends AbstractController
         if ($this->getUser()) {
             return $this->redirectToRoute('home');
         }
-
 
         // get the login error if there is one
         $error = $authenticationUtils->getLastAuthenticationError();
@@ -78,7 +123,7 @@ class SecurityController extends AbstractController
     /**
      * @Route("/forgot_password", name="forgot_password")
      */
-    public function forgotPassword(Request $request, MailerService $mailerService)
+    public function forgotPassword(Request $request, UserService $userService)
     {
         $user = new User();
         $forgotPasswordForm = $this->createForm(ForgotPasswordType::class, $user);
@@ -86,9 +131,7 @@ class SecurityController extends AbstractController
 
         if ($forgotPasswordForm->isSubmitted() && $forgotPasswordForm->isValid()) {
 
-
             $user = $this->userRepository->findOneBy(['username'=>$user->getUsername()]);
-
 
             if(!$user){
                 $this->addFlash('success', 'Consult your mailbox for your request to reset your password, if your account exist');
@@ -96,8 +139,7 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('forgot_password');
             }
 
-            $mailerService->askResetPassword($user);
-
+            $userService->askResetPassword($user);
 
             $this->addFlash('success', 'Consult your mailbox for your request to reset your password, if your account exist');
 
@@ -127,13 +169,12 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('forgot_password');
             }
 
-            if (!$this->isRequestInTime($user->getResetPasswordTokenCreatedAt())){
+            if (!$this->userService->isRequestInTime($user->getResetPasswordTokenCreatedAt())){
                 $this->addFlash('time up', 'Time limit exceeded, please start your request again');
                 return $this->redirectToRoute('forgot_password');
             }
 
-            $password = $passwordEncoder->encodePassword($user, $formData['plainPassword']);
-            $user->setPassword($password)
+            $user->setPlainPassword($formData['plainPassword'])
                 ->setResetPasswordToken(null)
                 ->setResetPasswordTokenCreatedAt(null);
 
@@ -142,13 +183,10 @@ class SecurityController extends AbstractController
             $this->addFlash('reset successful', 'Congratulations, your password has been changed, you can use it to sign in.');
 
             return $this->redirectToRoute('home');
-
         }
 
         return $this->render('security/resetpassword.html.twig', [
             'resetPasswordForm' => $resetPasswordForm->createView()
         ]);
     }
-
 }
-

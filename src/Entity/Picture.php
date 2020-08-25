@@ -79,21 +79,21 @@ class Picture
         return $this;
     }
 
-    /**
-     * @return UploadedFile
-     */
+
     public function getFile()
     {
         return $this->file;
     }
 
-    /**
-     * @param UploadedFile $file
-     * @return Picture
-     */
+
     public function setFile($file):self
     {
         $this->file = $file;
         return $this;
     }
+
+    public function getFullPath(){
+        return 'uploads/mainPicture/'. $this->getFileName();
+    }
+
 }

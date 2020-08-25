@@ -35,16 +35,4 @@ class AppController extends AbstractController
     {
         return $this->render('pages/tricks.html.twig');
     }
-
-
-    /**
-     * @Route ("/subscribe", name="subscribe")
-     * @return Response
-     */
-
-    public function subscribeAction(Request $request)
-    {
-        return $this->render('pages/subscribe.html.twig');
-    }
-
 }

@@ -25,26 +25,35 @@ class MainPictureListener
     {
         $entity = $args->getEntity();
 
-        if(!$entity instanceof Picture){
+        if (!$entity instanceof Picture) {
             return;
         }
 
-        $filename = $this->pictureUploader->upload($entity);
-        if ($filename === null){
+        $this->upload($entity);
+    }
+
+    private function upload(Picture $picture)
+    {
+        if(!$picture->getFile()){
             return;
         }
-        $entity->setFileName($filename);
+
+        $picture->setFileName(
+            $this->pictureUploader->upload(
+                $picture->getFile()
+            )
+        );
+    }
+
+    public function postRemove(LifecycleEventArgs $args)
+    {
+        $entity = $args->getEntity();
+        if (!$entity instanceof Picture) {
+            return;
         }
 
-        public function postRemove(LifecycleEventArgs $args)
-        {
-            $entity = $args->getEntity();
-            if (!$entity instanceof Picture) {
-                return;
-            }
-
-            $this->pictureUploader->remove($entity);
-        }
+        $this->pictureUploader->remove($entity);
+    }
 }
 
 
